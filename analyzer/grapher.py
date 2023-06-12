@@ -14,7 +14,7 @@ class Grapher:
         time_axis = np.arange(len(self.data[0]))*period*(1e-9)
         plt.figure(figsize=(16, 8))
         for signal in self.data[first:last]:
-            plt.plot(time_axis, signal)
+            plt.plot(signal)
         plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
         plt.show()
 

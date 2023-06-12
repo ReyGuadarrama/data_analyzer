@@ -76,7 +76,7 @@ class Extractor:
                 
         return wave_forms
     
-'''    def sampling_period(self):
+    def sampling_period(self):
         dir_list = glob.glob(self.path)
         found_match = False
 
@@ -94,4 +94,4 @@ class Extractor:
                                 found_match = True
                                 break
         
-        return period, units'''
+        return period, units
