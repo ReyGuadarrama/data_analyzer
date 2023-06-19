@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 from extractor import Extractor
 import numpy as np
 import pandas as pd
@@ -15,9 +16,19 @@ class Grapher:
         time_axis = np.arange(len(self.data[0]))*period*(1e-9)
         plt.figure(figsize=(16, 8))
         for signal in self.data[first:last]:
-            plt.plot(signal)
+            plt.plot(time_axis, signal)
+        plt.title(f'Events {first}-{last-1}', fontsize = 25)
+        plt.xlabel('Time [s]', fontsize = 15)
+        plt.ylabel('Voltage [V]', fontsize = 15)
         plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
         plt.show()
+
+    def dist(self, data, bins=50):
+        plt.figure(figsize=(16, 8))
+        sns.displot(data, kde=True, bins=50)
+        plt.title('Noise distribution', fontsize = 25)
+        plt.xlabel('Noise [V]')
+
 
     def histo(self, *data, flip = False, figure = True, stats = False, label = None):
         if figure:

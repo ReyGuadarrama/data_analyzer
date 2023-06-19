@@ -1,44 +1,59 @@
 from grapher import Grapher
 from extractor import Extractor
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import random
 
 class Signal_analyzer(Extractor, Grapher):
-    wave_forms = []
+    waves = []
+    channel = int
 
 
-    def __init__(self, path, channel):
+    def __init__(self, path, channel, offset_subtraction = True):
         Extractor.__init__(self, path, channel)
-        self.wave_forms = super().wave_forms(channel)
-        Grapher.__init__(self, self.wave_forms)
+        self.waves = super().wave_forms(channel, offset_subtraction)
+        self.channel = channel
+        Grapher.__init__(self, *self.waves)
 
-    def noise(self, n_signals = None, n_samples = 100):
-        if n_signals is None:
-            n_signals = len(self.wave_forms)
-        noise_sample = []
-        signal_samples = random.sample(self.wave_forms, n_signals)
-        for signal in signal_samples:
-            noise_sample += signal[-n_samples:]
-        statistics = {'statistics' : [round(np.mean(noise_sample), 4),
-                round(np.std(noise_sample), 4)]}
         
-        return pd.DataFrame(statistics, index = ['mean', 'std'])
-    
+    def noise(self, n_signals=None, n_samples=50, sigma=5, graph=False):
+        if n_signals is not None:
+            signal_samples = random.sample(self.waves, n_signals)
+        else:
+            signal_samples = self.waves
+        noise_sample = np.array([])
+        for signal in signal_samples:
+            noise_sample = np.concatenate((noise_sample, signal[:n_samples]))
+        if graph:
+            plt.figure(figsize=(16, 8))
+            plt.hist(noise_sample, histtype='step', bins=50)
+            plt.title(f'Noise distribution channel {self.channel}', fontsize = 25)
+            plt.ylabel('counts', fontsize = 15)
+            plt.xlabel('Noise [V]', fontsize = 15)
+            plt.xticks(fontsize=15)
+            plt.yticks(fontsize=15)
+            plt.show()
+        statistics = {
+            'statistics': [round(np.mean(noise_sample), 4), round(np.std(noise_sample), 4), round(np.std(noise_sample)*sigma, 4)]
+        }
+
+        return pd.DataFrame(statistics, index=['mean [V]', 'std [V]', f'{sigma} sigma [V]'])
+
+        
 
     def amplitude(self, negative_signal = False):
         amplitudes = []
+        
         if negative_signal:
-            for signal in self.wave_forms:
-                noise = np.mean(signal[-100:])
-                amplitude = np.min(signal)-noise
+            for signal in self.waves:
+                amplitude = np.min(signal)
                 amplitudes.append(amplitude)
             return -np.array(amplitudes)
     
         else:
-            for signal in self.wave_forms:
-                offset = np.mean(signal[-100:])
-                amplitude = np.max(signal)-offset
+            for signal in self.waves:
+                amplitude = np.max(signal)
                 amplitudes.append(amplitude)
 
             return np.array(amplitudes)
@@ -49,9 +64,8 @@ class Signal_analyzer(Extractor, Grapher):
         charges = []
         start, end = integration_window
 
-        for signal in self.wave_forms:
-            offset = np.mean(signal[-100:])
-            window = np.array(signal[start:end])-offset
+        for signal in self.waves:
+            window = np.array(signal[start:end])
             charge = (np.sum(window)*312.5)/50
             charges.append(charge)
         
@@ -60,51 +74,4 @@ class Signal_analyzer(Extractor, Grapher):
         else:
             return np.array(charges) 
 
-'''    def charge(self, negative_signal = False):
-        charges = []
-
-        for signal in self.wave_forms:
-            offset = np.mean(signal[-100:])
-            charge = ((np.cumsum(signal[200:500])*312.5)-(offset*312.5))/50
-            charges.append(charge)
-        
-        if negative_signal:
-            return -np.array(charges)
-        else:
-            return np.array(charges)'''
-
-        
-    
-
-'''    def moving_average(array, window_size):
-        moving_averages = []
-        for i in range(len(array) - window_size + 1):
-            window = array[i:i+window_size]
-            average = sum(window) / window_size
-            moving_averages.append(average)
-        return moving_averages'''
-
-    
-'''    def rise_time(self, n_signals = None, initial_percentage = 10, final_percentage = 90):
-        if n_signals is None:
-            n_signals = len(self.wave_forms)
-        signal_samples = random.sample(self.wave_forms, n_signals)
-        rise_time = []
-        #period = super().sampling_period()[0]
-        for signal in signal_samples:
-            max = np.max(signal)
-            start_value = initial_percentage*max
-            final_value = final_percentage*max
-
-            start_time = np.argmax(signal >= start_value)
-            final_time = np.argmax(signal >= final_value)
-
-            delta_time = (final_time - start_time)
-            rise_time.append(delta_time)
-        
-        statistics = {'statistics' : [round(np.mean(rise_time), 4),
-                round(np.std(rise_time), 4)]}
-        
-        return pd.DataFrame(statistics, index = ['mean', 'std'])'''
-        
 

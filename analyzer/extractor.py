@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import glob
+import numpy as np
 
 class Extractor:
     path = str
@@ -50,7 +51,7 @@ class Extractor:
         return self.data
     
 
-    def wave_forms(self, channel):
+    def wave_forms(self, channel, offset_subtraction = True):
         '''The wave_form method extracts the waveform of each event from the raw data and stores them in a list.
 
         Args:
@@ -66,13 +67,24 @@ class Extractor:
         for file_path in dir_list:
             with open(file_path, 'r') as file:
                 lines = file.readlines()
-                for line in lines:
-                    if re.search(rf'CH: {channel}', line):
-                        found_match = True
-                    elif found_match:
-                        line_values = line.split()
-                        wave_forms.append(list(map(float, line_values)))
-                        found_match = False
+                if offset_subtraction:
+                    for line in lines:
+                        if re.search(rf'CH: {channel}', line):
+                            found_match = True
+                        elif found_match:
+                            line_values = line.split()
+                            wave = np.array(list(map(float, line_values)))
+                            wave_forms.append(wave-np.mean(wave[:50]))
+                            found_match = False
+                else:
+                    for line in lines:
+                        if re.search(rf'CH: {channel}', line):
+                            found_match = True
+                        elif found_match:
+                            line_values = line.split()
+                            wave = np.array(list(map(float, line_values)))
+                            wave_forms.append(wave)
+                            found_match = False
                 
         return wave_forms
     
